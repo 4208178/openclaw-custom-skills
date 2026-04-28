@@ -98,3 +98,4 @@ if __name__ == "__main__":
     attachments = sys.argv[4:] if len(sys.argv) > 4 else None
     
     send_email(to_addr, subj, content, attachments)
+# 更新：添加附件支持 (2026-04-28)
