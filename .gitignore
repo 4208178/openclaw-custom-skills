@@ -1,0 +1,29 @@
+# OpenClaw Agent Configuration Protection
+# Only track role definitions, ignore runtime data and secrets
+
+# Ignore runtime data
+agents/*/agent/models.json
+agents/*/agent/auth-profiles.json
+agents/*/agent/*.context-tokens.json
+agents/*/sessions/
+agents/*/logs/
+
+# Ignore workspace data (if any)
+workspace-*/
+lancedb/
+
+# Ignore temporary files
+*.tmp
+*.log
+SESSION-STATE.md
+MEMORY.md.backup
+
+# Keep these (role definitions)
+agents/*/agent/IDENTITY.md
+agents/*/agent/AGENTS.md
+agents/*/agent/SOUL.md
+
+# Ignore credentials and secrets (if any)
+*.env
+*.secret
+credentials/
