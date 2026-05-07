@@ -1,0 +1,33 @@
+{
+  "name": "find-skill",
+  "description": "通过 GitHub API 和 ClawHub CLI 搜索和验证 OpenClaw 技能",
+  "providers": [
+    {
+      "name": "github-api",
+      "type": "api",
+      "baseUrl": "https://api.github.com",
+      "searchEndpoint": "/search/repositories",
+      "queryTemplate": "q=openclaw+skills+{keyword}",
+      "tokenEnv": "GITHUB_TOKEN",
+      "priority": 1,
+      "enabled": true,
+      "description": "官方 GitHub API，稳定可靠，优先使用"
+    },
+    {
+      "name": "clawhub-cli",
+      "type": "cli",
+      "command": "clawhub",
+      "searchCommand": "search",
+      "installCommand": "install",
+      "priority": 2,
+      "enabled": true,
+      "description": "ClawHub 官方 CLI，作为备选或特定场景使用"
+    }
+  ],
+  "settings": {
+    "maxResults": 10,
+    "timeoutSeconds": 30,
+    "fallbackEnabled": true,
+    "preferGitHub": true
+  }
+}
