@@ -36,3 +36,8 @@
 OpenClaw 会自动加载此目录下的技能。
 
 如需添加新技能，直接在此目录下创建新文件夹并包含 `SKILL.md` 文件。
+
+## 2026-05-07 更新
+- 新增技能：openclaw-skill-vetter, session-logs-enhanced, find-skill (config), auto-vetter.sh
+- 总数：18 个
+- 维护者：CEO 田螺
