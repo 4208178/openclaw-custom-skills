@@ -11,16 +11,31 @@ from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 import os
 import sys
+from pathlib import Path
 
-# 配置 (与现有工作脚本保持一致)
-EMAIL = "4208178@qq.com"
-AUTH_CODE = "otxfdvdefgexcagh"  # 已授权的授权码
-SMTP_SERVER = "smtp.qq.com"
-SMTP_PORT = 465
+# 加载 .env 文件
+env_path = Path(__file__).parent.parent / '.env'
+if env_path.exists():
+    import dotenv
+    dotenv.load_dotenv(env_path)
+
+# 配置 (从 .env 读取，若无则使用默认值)
+EMAIL = os.getenv('SMTP_EMAIL', '4208178@qq.com')
+AUTH_CODE = os.getenv('SMTP_AUTH_CODE', '')
+SMTP_SERVER = os.getenv('SMTP_SERVER', 'smtp.qq.com')
+SMTP_PORT = int(os.getenv('SMTP_PORT', 465))
+DEFAULT_RECIPIENT = os.getenv('DEFAULT_RECIPIENT', EMAIL)
 
 def send_email(to_email, subject, body, is_html=False):
     """发送邮件"""
     print("📧 正在准备发送邮件...")
+    print(f"   发件人：{EMAIL}")
+    print(f"   收件人：{to_email}")
+    print(f"   主题：{subject}")
+    
+    if not AUTH_CODE:
+        print("❌ 错误：SMTP_AUTH_CODE 未配置，请检查 .env 文件")
+        return False
     
     # 创建邮件
     msg = MIMEMultipart()
@@ -36,26 +51,27 @@ def send_email(to_email, subject, body, is_html=False):
     
     # 发送邮件
     try:
-        print("  [INFO] Connecting to SMTP server...")
+        print(" [INFO] Connecting to SMTP server...")
         server = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT)
-        print("  [INFO] Logging in...")
+        print(" [INFO] Logging in...")
         server.login(EMAIL, AUTH_CODE)
-        print("  [INFO] Sending email...")
+        print(" [INFO] Sending email...")
         server.send_message(msg)
         server.quit()
-        
-        print("  [OK] Email sent successfully!")
-        print(f"  [INFO] Sent to: {to_email}")
+        print(" [OK] Email sent successfully!")
+        print(f" [INFO] Sent to: {to_email}")
         return True
-        
     except Exception as e:
-        print(f"  [ERROR] Send failed: {e}")
+        print(f" [ERROR] Send failed: {e}")
+        # 记录失败日志
+        with open('/home/myuser/.openclaw/workspace-main/email-send-fail.log', 'a') as f:
+            f.write(f"Failed at {datetime.now()}: {e}\n")
         return False
 
 def send_report_file(report_path, to_email=None):
     """发送报告文件作为邮件正文"""
     if to_email is None:
-        to_email = EMAIL  # 默认发送给自己
+        to_email = DEFAULT_RECIPIENT
     
     print("📧 正在准备发送报告邮件...")
     
@@ -74,53 +90,43 @@ def send_report_file(report_path, to_email=None):
     
     # 创建邮件主题
     filename = os.path.basename(report_path)
-    subject = f"Tianluo Guniang Report: {filename} - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+    subject = f"Tianluo Report: {filename} - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
     
-    # 邮件正文
+    # 邮件正文 (HTML 格式)
     body = f"""
-Hello!
-
-This is an automated report from Tianluo Guniang.
-
-{report_content}
-
---
-Tianluo Guniang
-AI Assistant
-Sent at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+<html>
+<body>
+<h2>📊 田螺自动报告</h2>
+<p>发送时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+<hr>
+<pre style="white-space: pre-wrap; font-family: monospace;">{report_content}</pre>
+<hr>
+<p><small>-- Tianluo (CEO) AI Assistant</small></p>
+</body>
+</html>
 """
     
-    return send_email(to_email, subject, body)
+    return send_email(to_email, subject, body, is_html=True)
 
 def main():
-    print("Tianluo Guniang - Email Sender")
+    print("Tianluo - Email Sender")
     print("=" * 40)
     
     # 检查命令行参数
     if len(sys.argv) < 2:
         print("Usage:")
         print("  python3 send_email.py <report_file> [recipient_email]")
-        print("  python3 send_email.py --send-report  # 发送默认自检报告")
-        print("  python3 send_email.py --test         # 发送测试邮件")
+        print("  python3 send_email.py --test # 发送测试邮件")
         return
     
-    if sys.argv[1] == "--send-report":
-        # 发送默认自检报告
-        report_path = "/mnt/c/Users/4208178/OneDrive/Desktop/田螺姑娘输出/self_check_report_2026-04-18.md"
-        success = send_report_file(report_path)
-    elif sys.argv[1] == "--test":
+    if sys.argv[1] == "--test":
         # 发送测试邮件
         success = send_email(
-            EMAIL,
-            "Tianluo Guniang Test Email",
-            f"This is a test email from Tianluo Guniang.\n\nSent at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+            DEFAULT_RECIPIENT,
+            "Tianluo Test Email",
+            f"<html><body><h2>测试邮件</h2><p>这是来自田螺的测试邮件。</p><p>发送时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p></body></html>",
+            is_html=True
         )
-    elif sys.argv[1] == "--help":
-        print("Usage:")
-        print("  python3 send_email.py <report_file> [recipient_email]")
-        print("  python3 send_email.py --send-report  # 发送默认自检报告")
-        print("  python3 send_email.py --test         # 发送测试邮件")
-        return
     else:
         # 发送指定的报告文件
         report_path = sys.argv[1]
@@ -129,9 +135,9 @@ def main():
     
     print("\n" + "=" * 40)
     if success:
-        print("Email sent successfully!")
+        print("✅ Email sent successfully!")
     else:
-        print("Email send failed")
+        print("❌ Email send failed")
 
 if __name__ == "__main__":
     main()

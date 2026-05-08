@@ -1,35 +1,44 @@
-# Heartbeat Tasks - 团队健康检查
+# Heartbeat Tasks - 团队健康检查 (已禁用 - 改用熔断机制)
 
-## 核心任务
-1. **检查 CTO (蜜蜂/coding) 状态**
-   - 检查 `agent:coding:main` 会话状态
-   - 如果 `failed` 或 `done`，汇报 "CTO 需要重启"
-   - 不自动重启，仅汇报
+**状态**：✅ 已关闭主动轮询，改用**熔断器 + 轻量级检查**
 
-2. **检查 CIO (田芯/comms) 状态**
-   - 检查 `agent:comms:main` 会话状态
-   - 如果 `failed` 或 `done`，汇报 "CIO 需要重启"
-   - 不自动重启，仅汇报
+**核心改进**：
+- ❌ 不再等待代理回复（避免 429 循环）
+- ✅ 连续失败 2 次后自动熔断 30 分钟
+- ✅ 轻量级检查只读会话状态，不触发 API 调用
+- ✅ 失败任务写入 `memory/pending-tasks.md`，等待手动恢复
 
-3. **通信链路测试**
-   - 向 CTO/CIO 发送测试消息
-   - 确认回复能正确路由回主会话
+## 熔断器机制
+1. **触发条件**：连续 2 次检查发现 CTO/CIO 会话失效
+2. **熔断期间**：静默退出，不执行任何检查
+3. **自动恢复**：30 分钟后尝试一次轻量级检查
+4. **手动恢复**：`echo '{"circuitOpen": false}' > memory/circuit-breaker-state.json`
 
-## 执行频率
-- 每 2 小时检查一次（通过 cron 任务 `Team-Health-Check`）
-- 超时时间：30 秒
-- 失败告警：连续 2 次失败后发送告警
+## 检查流程 (每 30 分钟)
+1. 读取 `memory/circuit-breaker-state.json`
+2. 如果 `circuitOpen=true` → 静默退出
+3. 如果 `circuitOpen=false` → 执行 `scripts/team-health-lite.sh`
+4. 脚本检查 CTO/CIO 会话状态（不等待回复）
+5. 记录结果到 `memory/team-health.log`
+6. 如果连续失败 ≥ 2 次 → 打开熔断器
 
-## 异常处理
-- 如果连续 2 次检查失败，发送警报到微信
-- 记录失败日志到 `memory/heartbeat-failures.log`
-- 不自动重启，需手动干预
+## 手动检查流程
+当需要手动检查团队状态时：
+```bash
+# 1. 查看熔断器状态
+cat memory/circuit-breaker-state.json
 
-## 手动重启流程
-如果 CTO 或 CIO 需要重启，请执行以下步骤：
-1. 检查会话状态：`sessions_list`
-2. 如果会话状态为 `failed` 或 `done`，发送唤醒消息：
-   - CTO: `sessions_send --sessionKey agent:coding:main --message "CEO 指令：立即重启并汇报状态"`
-   - CIO: `sessions_send --sessionKey agent:comms:main --message "CEO 指令：立即重启并汇报状态"`
-3. 如果 `sessions_send` 超时，重启 Gateway：`openclaw gateway restart`
-4. 验证会话状态：`sessions_list`
+# 2. 如果熔断器关闭，手动执行检查
+/home/myuser/.openclaw/workspace-main/scripts/team-health-lite.sh
+
+# 3. 查看日志
+cat memory/team-health.log
+
+# 4. 如果需要重启失效会话
+sessions_send --sessionKey agent:coding:main --message "CEO 指令：重启并汇报状态"
+sessions_send --sessionKey agent:comms:main --message "CEO 指令：重启并汇报状态"
+```
+
+## 原任务
+- `Simple-Heal` (ID: `07505dd1-1cd7-4694-b3e7-39181d66c49c`) - **已删除**
+- `Team-Health-Lite` (ID: `fd06ebe2-fe69-46ad-906b-3d5cb8be8fd3`) - **已启用** (每 30 分钟)
