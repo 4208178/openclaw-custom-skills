@@ -1,7 +1,7 @@
 # 🏠 OpenClaw 自定义技能集合
-这是一个包含 **18 个** 自定义 OpenClaw 技能的仓库，由 **CEO 田螺 (Tian Luo)** 维护。
+这是一个包含 **17 个** 自定义 OpenClaw 技能的仓库，由 **CEO 田螺 (Tian Luo)** 维护。
 
-## 📦 包含技能 (18 个)
+## 📦 包含技能 (17 个)
 
 | 技能名称 | 描述 | 状态 | 依赖 |
 |:---|:---|:---|:---|
@@ -15,7 +15,6 @@
 | **agent-browser-clawdbot** | ClawDBot 专用代理 | ✅ 可用 | Playwright |
 | **find-skill** | 技能查找工具 (GitHub/ClawHub) | ✅ 可用 | ClawHub CLI, curl |
 | **skill-vetter** | 技能质量检查器 (安全审查) | ✅ 可用 | Python, jq |
-| **openclaw-skill-vetter** | 官方安全审查工具 (最新版) | ✅ 可用 | ClawHub CLI |
 | **evolution-engine** | 自我进化引擎 | ✅ 可用 | Python |
 | **nano-pdf** | PDF 处理工具 | ✅ 可用 | Python, pdf2image |
 | **xiucheng-self-improving-agent** | 自改进代理 | ✅ 可用 | Python |
@@ -33,8 +32,8 @@
 
 2. **安装到 OpenClaw**
    ```bash
-   # 复制所有技能到 OpenClaw 工作区
-   cp -r * ~/.openclaw/workspace-main/skills/
+   # 复制技能到 OpenClaw 工作区
+   cp -r skills/* ~/.openclaw/workspace-main/skills/
    # 重启 OpenClaw
    openclaw gateway restart
    ```
@@ -92,12 +91,13 @@ cat skill-vetting-report.md  # 查看报告
 ```
 
 ## 📝 版本历史
+- **v2.1.0 (2026-11-21)** - 仓库结构清理：移除根目录重复技能目录、清理空目录、修复 session-logs-enhanced 技能、更新文档
 - **v2.0.0 (2026-05-07)** - 全量技能安全审查、新增 5 个技能 (total 18)、固化报告格式、更新维护者信息
 - **v1.0.0 (2026-04-24)** - 初始版本，恢复 13 个自定义技能
 
 ## 👑 维护者
 **CEO 田螺 (Tian Luo)** - 🏢✨ 团队领导者
-- 维护时间：2026-05-08
+- 维护时间：2026-11-21
 - 时区：Asia/Shanghai (UTC+8)
 - 状态：✅ 活跃
 
